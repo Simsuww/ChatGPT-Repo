@@ -24,15 +24,15 @@ const CardVision = (() => {
     scanIntervalMs:   600,   // grab a frame every 600ms (PP deals ~2s per card)
     brightnessThresh: 200,   // PP cards are bright white/cream
     darkThresh:       90,    // ink threshold (PP uses slightly thicker fonts)
-    minCardArea:      3000,  // PP cards ~80×110 = 8800px² min; allow partial views
+    minCardArea:      5000,  // minimum bounding-box area; filters tiny chip-text blobs
     maxCardArea:      60000, // large cards at high zoom
-    minAspect:        1.0,   // cards are taller than wide (portrait)
-    maxAspect:        2.0,   // allow for slight angle
-    rankFracW:        0.28,  // PP rank corner occupies ~28% of card width
+    minAspect:        0.8,   // very permissive — angled cards can appear nearly square
+    maxAspect:        3.5,   // allow steeply foreshortened cards
+    rankFracW:        0.28,  // rank corner occupies ~28% of card width
     rankFracH:        0.30,  // and ~30% of card height
+    minCornerBright:  0.65,  // ≥65% of rank-corner pixels must be white/cream
+                             // cards are white-faced; chips/bet-spots are coloured
     dedupeMs:         2000,  // PP deals slower — 2s dedup window
-    // Background colour check: PP felt is dark green — used to validate card edges
-    bgMaxR: 110, bgMaxG: 170, bgMaxB: 110,  // pixels outside this range = not PP felt
   };
 
   // ── State ────────────────────────────────────────────────────────────
@@ -213,7 +213,7 @@ const CardVision = (() => {
     }
 
     if (count < 10) return null;
-    return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
+    return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1, count };
   }
 
   // ── Rank identification ───────────────────────────────────────────────
@@ -238,7 +238,8 @@ const CardVision = (() => {
 
     // Extract dark pixel map for rank corner
     const darkMap = [];
-    let totalDark = 0;
+    let totalDark   = 0;
+    let totalBright = 0;  // pixels clearly white/cream (lum > 170)
 
     for (let y = ry; y < ry + rh; y++) {
       const row = [];
@@ -248,12 +249,19 @@ const CardVision = (() => {
         const dark = lum < CFG.darkThresh ? 1 : 0;
         row.push(dark);
         totalDark += dark;
+        if (lum > 170) totalBright++;
       }
       darkMap.push(row);
     }
 
     const totalPixels = rw * rh;
-    const darkRatio   = totalDark / totalPixels;
+    const darkRatio   = totalDark   / totalPixels;
+    const brightRatio = totalBright / totalPixels;
+
+    // The rank corner must be predominantly white/cream — this is what distinguishes
+    // a playing card face from chips (coloured) and bet spots (coloured rings).
+    // Works regardless of felt colour or camera angle.
+    if (brightRatio < CFG.minCornerBright) return null;
 
     // Too few dark pixels → likely blank / card back
     if (darkRatio < 0.02) return null;
