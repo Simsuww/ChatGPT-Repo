@@ -37,6 +37,7 @@
         "lib/counter.js",
         "lib/ev.js",
         "lib/strategy.js",
+        "lib/card-vision.js",
         "content.js"
       ],
       "css": ["styles/overlay.css"],
@@ -47,7 +48,7 @@
 
   "web_accessible_resources": [
     {
-      "resources": ["styles/overlay.css", "icons/*"],
+      "resources": ["styles/overlay.css", "icons/*", "lib/page-inject.js"],
       "matches": ["<all_urls>"]
     }
   ],
