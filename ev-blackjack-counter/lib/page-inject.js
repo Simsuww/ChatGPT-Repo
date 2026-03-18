@@ -77,55 +77,74 @@
     'rank', 'cardrank', 'cardvalue', 'value', 'rank_id', 'rankid',
     'card', 'cardid', 'card_id', 'rankvalue', 'facevalue', 'face'
   ];
-  const PARENT_KEYS = [
-    'card', 'cards', 'hand', 'dealt', 'newcard', 'playercard',
-    'dealercard', 'initialcard', 'communitycard', 'dealtcard',
-    'playercards', 'dealercards', 'hands', 'initialcards', 'dealtcards'
-  ];
 
+  // Keys that never contain card data — skip them to avoid false positives
+  // and unnecessary deep recursion.
+  const SKIP_KEYS = new Set([
+    'timestamp', 'time', 'created', 'updated', 'date',
+    'sessionid', 'session_id', 'userid', 'user_id', 'playerid', 'player_id',
+    'tableid', 'table_id', 'gameid', 'game_id', 'roundid', 'round_id',
+    'token', 'auth', 'jwt', 'signature', 'hash', 'checksum',
+    'url', 'uri', 'href', 'src', 'path', 'endpoint',
+    'version', 'build', 'revision',
+    'width', 'height', 'x', 'y', 'z', 'color', 'colour',
+    'balance', 'bet', 'wager', 'payout', 'win', 'loss',
+    'currency', 'amount', 'total',
+    'name', 'title', 'label', 'description', 'message', 'text',
+    'status', 'state', 'phase', 'stage', 'step',
+    'type', 'event', 'action', 'cmd', 'command',
+    'error', 'code', 'reason'
+  ]);
+
+  // Try to identify a single object as a card and emit it.
+  // Returns true if a card was found in this object.
+  function tryEmitCard(obj) {
+    // Pragmatic Play primary pattern: {rank: N, suit: N}
+    if (typeof obj.rank === 'number' && obj.suit !== undefined) {
+      const norm = normaliseRank(String(obj.rank));
+      if (norm) { emit(norm); return true; }
+    }
+
+    // Integer card ID
+    const idVal = obj.cardId ?? obj.card_id ?? obj.cardID;
+    if (typeof idVal === 'number') {
+      const norm = decodeCardId(idVal);
+      if (norm) { emit(norm); return true; }
+    }
+
+    // Rank-like string/number keys
+    for (const key of CARD_KEYS) {
+      const val = obj[key] ?? obj[key.toLowerCase()];
+      if (val !== undefined) {
+        const norm = normaliseRank(val);
+        if (norm) { emit(norm); return true; }
+      }
+    }
+
+    return false;
+  }
+
+  // Fully recursive search — visits every nested object/array so that
+  // cards belonging to ALL players at the table are counted, regardless
+  // of what key their hand is stored under (seats, players, hands, etc.)
   function searchForCards(obj, depth) {
-    if (depth > 8 || obj === null || typeof obj !== 'object') return;
+    if (depth > 10 || obj === null || typeof obj !== 'object') return;
 
     if (Array.isArray(obj)) {
       obj.forEach(item => searchForCards(item, depth + 1));
       return;
     }
 
-    // Pragmatic Play primary pattern: {rank: N, suit: N}
-    if (typeof obj.rank === 'number' && (typeof obj.suit === 'number' || obj.suit !== undefined)) {
-      const norm = normaliseRank(String(obj.rank));
-      if (norm) { emit(norm); return; }
-    }
+    // If this object looks like a card, emit it and stop descending into it.
+    if (tryEmitCard(obj)) return;
 
-    // Integer card ID fields
-    const idVal = obj.cardId ?? obj.card_id ?? obj.cardID;
-    if (typeof idVal === 'number') {
-      const norm = decodeCardId(idVal);
-      if (norm) { emit(norm); return; }
+    // Otherwise recurse into every value that is an object or array,
+    // skipping keys that are known to be irrelevant metadata.
+    for (const [key, val] of Object.entries(obj)) {
+      if (val === null || typeof val !== 'object') continue;
+      if (SKIP_KEYS.has(key.toLowerCase())) continue;
+      searchForCards(val, depth + 1);
     }
-
-    // Try rank-like keys
-    for (const key of CARD_KEYS) {
-      const val = obj[key] ?? obj[key.toLowerCase()];
-      if (val !== undefined) {
-        const norm = normaliseRank(val);
-        if (norm) { emit(norm); return; }
-      }
-    }
-
-    // Recurse into known card-parent keys
-    for (const key of Object.keys(obj)) {
-      const lk = key.toLowerCase();
-      if (PARENT_KEYS.some(pk => lk.includes(pk))) {
-        searchForCards(obj[key], depth + 1);
-      }
-    }
-
-    // Recurse into generic payload/data wrappers
-    if (obj.data   && typeof obj.data   === 'object') searchForCards(obj.data,    depth + 1);
-    if (obj.payload && typeof obj.payload === 'object') searchForCards(obj.payload, depth + 1);
-    if (obj.result && typeof obj.result  === 'object') searchForCards(obj.result,  depth + 1);
-    if (obj.state  && typeof obj.state   === 'object') searchForCards(obj.state,   depth + 1);
   }
 
   // Recursively look for string values that contain embedded JSON
