@@ -11,11 +11,7 @@
   ],
 
   "host_permissions": [
-    "*://*.evolution.com/*",
-    "*://*.evolutiongaming.com/*",
-    "*://*.pragmaticplaylive.net/*",
-    "*://*.casinomodule.com/*",
-    "*://*.ezugi.com/*"
+    "<all_urls>"
   ],
 
   "background": {
@@ -35,27 +31,24 @@
   "content_scripts": [
     {
       "matches": [
-        "*://*.evolution.com/*",
-        "*://*.evolutiongaming.com/*",
-        "*://*.pragmaticplaylive.net/*",
-        "*://*.casinomodule.com/*",
-        "*://*.ezugi.com/*"
+        "<all_urls>"
       ],
       "js": [
         "lib/counter.js",
         "lib/ev.js",
         "lib/strategy.js",
+        "lib/card-vision.js",
         "content.js"
       ],
       "css": ["styles/overlay.css"],
       "run_at": "document_idle",
-      "all_frames": false
+      "all_frames": true
     }
   ],
 
   "web_accessible_resources": [
     {
-      "resources": ["styles/overlay.css", "icons/*"],
+      "resources": ["styles/overlay.css", "icons/*", "lib/page-inject.js"],
       "matches": ["<all_urls>"]
     }
   ],

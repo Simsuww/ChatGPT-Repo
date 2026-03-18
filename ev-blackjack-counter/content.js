@@ -18,8 +18,12 @@
   if (document.getElementById('ev-bj-overlay')) return;
 
   // ── State ────────────────────────────────────────────────────────────────
-  let shoe = HiLo.createShoe(6);
-  let session = EV.createSession(1000, 5, 500, '6_S17_DAS');
+  let shoe = HiLo.createShoe(8);
+  let session = EV.createSession(1000, 5, 500, '8_S17_DAS');
+
+  // Auto-detect state
+  let autoMode = 'off'; // 'off' | 'ws' | 'scan' | 'click'
+  let wsCardsDetected = 0;
 
   // Input mode: 'shoe' (count all cards), 'player' (player hand), 'dealer' (dealer upcard)
   let inputMode = 'shoe';
@@ -28,8 +32,8 @@
 
   // Settings loaded from storage (defaults)
   let settings = {
-    numDecks: 6,
-    ruleKey: '6_S17_DAS',
+    numDecks: 8,
+    ruleKey: '8_S17_DAS',
     bankroll: 1000,
     minBet: 5,
     maxBet: 500,
@@ -457,6 +461,22 @@
           </div>
         </div>
 
+        <div class="ev-bj-divider"></div>
+
+        <!-- Auto-detect controls -->
+        <div class="ev-bj-section">
+          <div class="ev-bj-row" style="margin-bottom:5px;">
+            <span class="ev-bj-label">Auto-Detect</span>
+            <span id="ev-bj-auto-status" style="font-size:10px;color:#94a3b8;">Off</span>
+          </div>
+          <div class="ev-bj-mode-row">
+            <span class="ev-bj-auto-btn ev-bj-mode-btn" data-auto="off">Off</span>
+            <span class="ev-bj-auto-btn ev-bj-mode-btn" data-auto="ws" title="Intercept WebSocket game data">WS</span>
+            <span class="ev-bj-auto-btn ev-bj-mode-btn active" data-auto="scan" title="Scan video frames for cards">Video</span>
+            <span class="ev-bj-auto-btn ev-bj-mode-btn" data-auto="click" title="Click on cards to read them">Click</span>
+          </div>
+        </div>
+
       </div>
     `;
 
@@ -470,8 +490,8 @@
       btn.addEventListener('click', () => addCard(btn.dataset.card));
     });
 
-    // Mode buttons
-    overlay.querySelectorAll('.ev-bj-mode-btn').forEach(btn => {
+    // Input mode buttons (Shoe / Dealer / Player) — exclude auto-detect buttons
+    overlay.querySelectorAll('.ev-bj-mode-btn:not(.ev-bj-auto-btn)').forEach(btn => {
       btn.addEventListener('click', () => {
         inputMode = btn.dataset.mode;
         if (inputMode === 'dealer') {
@@ -480,6 +500,11 @@
         }
         render();
       });
+    });
+
+    // Auto-detect buttons
+    overlay.querySelectorAll('.ev-bj-auto-btn').forEach(btn => {
+      btn.addEventListener('click', () => setAutoMode(btn.dataset.auto));
     });
 
     // Action buttons
@@ -533,6 +558,66 @@
     });
   }
 
+  // ── Auto-detect: inject page script ─────────────────────────────────────
+  function injectPageScript() {
+    const s = document.createElement('script');
+    s.src = chrome.runtime.getURL('lib/page-inject.js');
+    s.onload = () => s.remove();
+    (document.head || document.documentElement).appendChild(s);
+  }
+
+  // ── Auto-detect: listen for messages from page-inject.js ─────────────────
+  function listenForPageMessages() {
+    window.addEventListener('message', (evt) => {
+      if (!evt.data?.__evBj) return;
+
+      if (evt.data.type === 'CARD_DETECTED') {
+        const card = evt.data.card;
+        if (!card) return;
+        wsCardsDetected++;
+        addCard(card);
+        updateAutoStatus(`WS: ${wsCardsDetected} cards`);
+      }
+
+      if (evt.data.type === 'WS_CONNECTED') {
+        updateAutoStatus(`WS connected`);
+      }
+    });
+  }
+
+  function updateAutoStatus(text) {
+    const el = document.getElementById('ev-bj-auto-status');
+    if (el) el.textContent = text;
+  }
+
+  function setAutoMode(mode) {
+    // Tear down previous mode
+    if (autoMode === 'scan') CardVision.stopAutoScan();
+    if (autoMode === 'click') CardVision.disableClickMode();
+
+    autoMode = mode;
+
+    if (mode === 'ws') {
+      // WebSocket is always active once page-inject is loaded
+      updateAutoStatus('Listening for WS data…');
+    } else if (mode === 'scan') {
+      CardVision.startAutoScan();
+      updateAutoStatus('Scanning video…');
+    } else if (mode === 'click') {
+      CardVision.enableClickMode();
+      updateAutoStatus('Click on a card');
+    } else {
+      CardVision.stopAutoScan();
+      CardVision.disableClickMode();
+      updateAutoStatus('Manual');
+    }
+
+    // Update buttons
+    document.querySelectorAll('.ev-bj-auto-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.auto === mode);
+    });
+  }
+
   // ── Inject CSS ───────────────────────────────────────────────────────────
   function injectCSS() {
     const link = document.createElement('link');
@@ -566,6 +651,20 @@
         if (msg.type === 'TOGGLE_OVERLAY') toggleVisibility();
       });
     }
+
+    // ── Auto-detect setup ─────────────────────────────────────────────
+    // 1. Inject page script for WebSocket interception
+    injectPageScript();
+    listenForPageMessages();
+
+    // 2. Init CardVision (video scan + click-to-read)
+    CardVision.init((rank, source) => {
+      addCard(rank);
+      updateAutoStatus(`${source}: ${rank}`);
+    });
+
+    // Default: WS mode on (page-inject always active, no extra cost)
+    setAutoMode('scan');
 
     loadSettings();
     render();
