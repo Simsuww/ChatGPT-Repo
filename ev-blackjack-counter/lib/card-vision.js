@@ -1,33 +1,38 @@
 /**
- * Card Vision Module
+ * Card Vision Module — tuned for Pragmatic Play Live Blackjack
+ *
+ * Pragmatic Play card characteristics (720p stream):
+ *  • White/cream cards on a dark green felt background
+ *  • Cards are roughly 80–130px wide, 110–185px tall at 720p
+ *  • Rank character sits in top-left ~28% W × 30% H of card
+ *  • Red suits (hearts/diamonds) have coloured rank text
+ *  • Green background: R < 90, G 100–160, B < 90 — helps confirm boundaries
  *
  * Two detection methods:
- *
- * 1. AUTO-SCAN  — Periodically grabs a video frame, finds white card
- *                 rectangles, extracts the rank from the top-left corner
- *                 using pixel projection analysis.
- *
- * 2. CLICK-READ — User clicks anywhere on the page; we sample the pixel
- *                 region under the cursor, find the nearest card region,
- *                 and identify its rank.
+ *  1. AUTO-SCAN  — Periodically grabs a video frame, finds white card
+ *                  rectangles, extracts rank via pixel projection analysis.
+ *  2. CLICK-READ — User clicks on a card in the video; extension reads
+ *                  that region and identifies the rank.
  */
 
 'use strict';
 
 const CardVision = (() => {
 
-  // ── Config ───────────────────────────────────────────────────────────
+  // ── Config (tuned for Pragmatic Play 720p stream) ────────────────────
   const CFG = {
-    scanIntervalMs:   800,   // how often to grab a frame (ms)
-    brightnessThresh: 210,   // min brightness to be considered "card white"
-    darkThresh:       80,    // max brightness to be "dark ink"
-    minCardArea:      800,   // min pixels² for a card region
-    maxCardArea:      80000, // max pixels²
-    minAspect:        0.5,   // min height/width ratio
-    maxAspect:        2.2,   // max height/width ratio
-    rankFracW:        0.30,  // fraction of card width used for rank corner
-    rankFracH:        0.32,  // fraction of card height used for rank corner
-    dedupeMs:         1500,  // ignore same card within this window
+    scanIntervalMs:   600,   // grab a frame every 600ms (PP deals ~2s per card)
+    brightnessThresh: 200,   // PP cards are bright white/cream
+    darkThresh:       90,    // ink threshold (PP uses slightly thicker fonts)
+    minCardArea:      3000,  // PP cards ~80×110 = 8800px² min; allow partial views
+    maxCardArea:      60000, // large cards at high zoom
+    minAspect:        1.0,   // cards are taller than wide (portrait)
+    maxAspect:        2.0,   // allow for slight angle
+    rankFracW:        0.28,  // PP rank corner occupies ~28% of card width
+    rankFracH:        0.30,  // and ~30% of card height
+    dedupeMs:         2000,  // PP deals slower — 2s dedup window
+    // Background colour check: PP felt is dark green — used to validate card edges
+    bgMaxR: 110, bgMaxG: 170, bgMaxB: 110,  // pixels outside this range = not PP felt
   };
 
   // ── State ────────────────────────────────────────────────────────────
@@ -329,8 +334,32 @@ const CardVision = (() => {
 
   // ── Helpers ───────────────────────────────────────────────────────────
 
+  // Pragmatic Play known iframe src patterns
+  const PP_PATTERNS = [
+    'pragmaticplaylive', 'pragmaticplay', 'ppgames',
+    'pragmatic-play', 'viplive', 'live.pragmatic'
+  ];
+
   function findVideoElement() {
-    // Prefer largest visible video
+    // 1. Search inside Pragmatic Play iframes first (same-origin only)
+    for (const iframe of document.querySelectorAll('iframe')) {
+      try {
+        const src = (iframe.src || '').toLowerCase();
+        const isPP = PP_PATTERNS.some(p => src.includes(p));
+        const doc  = iframe.contentDocument;
+        if (!doc) continue;
+        let best = null, bestArea = 0;
+        for (const v of doc.querySelectorAll('video')) {
+          if (v.readyState < 2) continue;
+          const area = v.videoWidth * v.videoHeight;
+          if (area > bestArea) { best = v; bestArea = area; }
+        }
+        // Prefer PP iframe video; also accept any iframe with a large video
+        if (best && (isPP || bestArea > 100000)) return best;
+      } catch (_) { /* cross-origin — skip */ }
+    }
+
+    // 2. Fallback: largest video in main document
     let best = null, bestArea = 0;
     for (const v of document.querySelectorAll('video')) {
       if (v.readyState < 2) continue;

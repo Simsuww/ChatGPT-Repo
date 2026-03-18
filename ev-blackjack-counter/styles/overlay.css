@@ -282,6 +282,13 @@
   border-color: #3b82f6;
   color: #93c5fd;
 }
+/* Auto-detect active button is green so it's clearly distinct */
+.ev-bj-auto-btn.active {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: #22c55e;
+  color: #86efac;
+  box-shadow: 0 0 6px rgba(34,197,94,0.4);
+}
 .ev-bj-mode-btn:hover:not(.active) {
   background: rgba(51, 65, 85, 0.6);
   color: #cbd5e1;

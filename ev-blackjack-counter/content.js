@@ -18,8 +18,8 @@
   if (document.getElementById('ev-bj-overlay')) return;
 
   // ── State ────────────────────────────────────────────────────────────────
-  let shoe = HiLo.createShoe(6);
-  let session = EV.createSession(1000, 5, 500, '6_S17_DAS');
+  let shoe = HiLo.createShoe(8);
+  let session = EV.createSession(1000, 5, 500, '8_S17_DAS');
 
   // Auto-detect state
   let autoMode = 'off'; // 'off' | 'ws' | 'scan' | 'click'
@@ -32,8 +32,8 @@
 
   // Settings loaded from storage (defaults)
   let settings = {
-    numDecks: 6,
-    ruleKey: '6_S17_DAS',
+    numDecks: 8,
+    ruleKey: '8_S17_DAS',
     bankroll: 1000,
     minBet: 5,
     maxBet: 500,
@@ -467,12 +467,12 @@
         <div class="ev-bj-section">
           <div class="ev-bj-row" style="margin-bottom:5px;">
             <span class="ev-bj-label">Auto-Detect</span>
-            <span id="ev-bj-auto-status" style="font-size:10px;color:#475569;">Manual</span>
+            <span id="ev-bj-auto-status" style="font-size:10px;color:#94a3b8;">Off</span>
           </div>
           <div class="ev-bj-mode-row">
             <span class="ev-bj-auto-btn ev-bj-mode-btn" data-auto="off">Off</span>
-            <span class="ev-bj-auto-btn ev-bj-mode-btn active" data-auto="ws" title="Intercept WebSocket game data">WS</span>
-            <span class="ev-bj-auto-btn ev-bj-mode-btn" data-auto="scan" title="Scan video frames for cards">Video</span>
+            <span class="ev-bj-auto-btn ev-bj-mode-btn" data-auto="ws" title="Intercept WebSocket game data">WS</span>
+            <span class="ev-bj-auto-btn ev-bj-mode-btn active" data-auto="scan" title="Scan video frames for cards">Video</span>
             <span class="ev-bj-auto-btn ev-bj-mode-btn" data-auto="click" title="Click on cards to read them">Click</span>
           </div>
         </div>
@@ -490,8 +490,8 @@
       btn.addEventListener('click', () => addCard(btn.dataset.card));
     });
 
-    // Mode buttons
-    overlay.querySelectorAll('.ev-bj-mode-btn').forEach(btn => {
+    // Input mode buttons (Shoe / Dealer / Player) — exclude auto-detect buttons
+    overlay.querySelectorAll('.ev-bj-mode-btn:not(.ev-bj-auto-btn)').forEach(btn => {
       btn.addEventListener('click', () => {
         inputMode = btn.dataset.mode;
         if (inputMode === 'dealer') {
@@ -664,7 +664,7 @@
     });
 
     // Default: WS mode on (page-inject always active, no extra cost)
-    setAutoMode('ws');
+    setAutoMode('scan');
 
     loadSettings();
     render();
