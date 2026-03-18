@@ -24,10 +24,12 @@ const CardVision = (() => {
     scanIntervalMs:   600,   // grab a frame every 600ms (PP deals ~2s per card)
     brightnessThresh: 200,   // PP cards are bright white/cream
     darkThresh:       90,    // ink threshold (PP uses slightly thicker fonts)
-    minCardArea:      3000,  // PP cards ~80×110 = 8800px² min; allow partial views
+    minCardArea:      5000,  // PP cards ~80×110 = 8800px² min; raised to filter chip text
     maxCardArea:      60000, // large cards at high zoom
-    minAspect:        1.0,   // cards are taller than wide (portrait)
+    minAspect:        1.25,  // cards are clearly portrait; chips are circular (~1.0) — filter them
     maxAspect:        2.0,   // allow for slight angle
+    minFillRatio:     0.72,  // fraction of bounding box that must be white; circle=0.785 < rect≈1.0
+                             // threshold at 0.72 still rejects circular chips with noisy BFS
     rankFracW:        0.28,  // PP rank corner occupies ~28% of card width
     rankFracH:        0.30,  // and ~30% of card height
     dedupeMs:         2000,  // PP deals slower — 2s dedup window
@@ -176,11 +178,55 @@ const CardVision = (() => {
         if (area   < CFG.minCardArea  || area   > CFG.maxCardArea)  continue;
         if (aspect < CFG.minAspect    || aspect > CFG.maxAspect)    continue;
 
+        // Fill-ratio check: cards are solid rectangles; chips/circles have lower fill.
+        // count is stride-sampled pixels; compare to stride-grid over the bounding box.
+        const stridedW  = Math.ceil(region.w / stride) + 1;
+        const stridedH  = Math.ceil(region.h / stride) + 1;
+        const fillRatio = region.count / (stridedW * stridedH);
+        if (fillRatio < CFG.minFillRatio) continue;
+
+        // Green felt surround: pixels just outside the bounding box should be felt-coloured.
+        // This rejects bright UI elements, bet-spot circles, chip highlights, etc.
+        if (!hasFeltSurround(imageData, region)) continue;
+
         regions.push(region);
       }
     }
 
     return regions;
+  }
+
+  /**
+   * Sample pixels in a narrow strip around the outside of a bounding box.
+   * Returns true if ≥30% of sampled pixels match the Pragmatic Play green felt.
+   */
+  function hasFeltSurround(imageData, region) {
+    const { width, height, data } = imageData;
+    const margin = 10;
+    const step   = 6;
+    const x1 = Math.max(0, region.x - margin);
+    const y1 = Math.max(0, region.y - margin);
+    const x2 = Math.min(width  - 1, region.x + region.w + margin);
+    const y2 = Math.min(height - 1, region.y + region.h + margin);
+
+    let green = 0, total = 0;
+
+    function sample(sx, sy) {
+      if (sx < 0 || sy < 0 || sx >= width || sy >= height) return;
+      // Skip pixels that are inside the card region
+      if (sx >= region.x && sx <= region.x + region.w &&
+          sy >= region.y && sy <= region.y + region.h) return;
+      const i = (sy * width + sx) * 4;
+      const r = data[i], g = data[i+1], b = data[i+2];
+      // Dark green felt: green channel dominant, overall dark
+      if (g > r + 10 && g > b + 10 && g > 60 && g < 185 && r < 130 && b < 130) green++;
+      total++;
+    }
+
+    for (let x = x1; x <= x2; x += step) { sample(x, y1); sample(x, y2); }
+    for (let y = y1; y <= y2; y += step) { sample(x1, y); sample(x2, y); }
+
+    return total > 0 && (green / total) >= 0.30;
   }
 
   function floodFill(imageData, startX, startY, visited, stride) {
@@ -213,7 +259,7 @@ const CardVision = (() => {
     }
 
     if (count < 10) return null;
-    return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
+    return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1, count };
   }
 
   // ── Rank identification ───────────────────────────────────────────────
