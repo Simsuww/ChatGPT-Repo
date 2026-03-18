@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="16" height="16">
+  <rect width="128" height="128" rx="24" fill="#0f172a"/>
+  <rect x="8" y="8" width="112" height="112" rx="18" fill="#1e3a5f" stroke="#3b82f6" stroke-width="3"/>
+  <!-- Playing card shape -->
+  <rect x="30" y="24" width="44" height="60" rx="6" fill="white"/>
+  <rect x="54" y="44" width="44" height="60" rx="6" fill="#dc2626"/>
+  <!-- EV text -->
+  <text x="52" y="110" font-family="monospace" font-size="22" font-weight="900" fill="#fbbf24" text-anchor="middle">EV</text>
+</svg>

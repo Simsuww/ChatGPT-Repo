@@ -1,0 +1,78 @@
+{
+  "manifest_version": 3,
+  "name": "EV Blackjack Counter",
+  "version": "1.0.0",
+  "description": "Hi-Lo card counting overlay with EV calculator, betting spread, and Illustrious 18 deviations for Evolution Gaming and Pragmatic Play live blackjack.",
+
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+
+  "host_permissions": [
+    "*://*.evolution.com/*",
+    "*://*.evolutiongaming.com/*",
+    "*://*.pragmaticplaylive.net/*",
+    "*://*.casinomodule.com/*",
+    "*://*.ezugi.com/*"
+  ],
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "EV Blackjack Counter",
+    "default_icon": {
+      "16":  "icons/icon16.png",
+      "48":  "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.evolution.com/*",
+        "*://*.evolutiongaming.com/*",
+        "*://*.pragmaticplaylive.net/*",
+        "*://*.casinomodule.com/*",
+        "*://*.ezugi.com/*"
+      ],
+      "js": [
+        "lib/counter.js",
+        "lib/ev.js",
+        "lib/strategy.js",
+        "content.js"
+      ],
+      "css": ["styles/overlay.css"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+
+  "web_accessible_resources": [
+    {
+      "resources": ["styles/overlay.css", "icons/*"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+
+  "commands": {
+    "toggle-overlay": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+B",
+        "mac": "Command+Shift+B"
+      },
+      "description": "Toggle the EV Blackjack Counter overlay"
+    }
+  },
+
+  "icons": {
+    "16":  "icons/icon16.png",
+    "48":  "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

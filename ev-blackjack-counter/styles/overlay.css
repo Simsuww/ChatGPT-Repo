@@ -1,0 +1,420 @@
+/* ── EV Blackjack Counter — Floating Overlay ───────────────────────────── */
+
+#ev-bj-overlay {
+  all: initial;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 2147483647;
+  width: 280px;
+  background: rgba(10, 14, 20, 0.95);
+  border: 1px solid #2a3a52;
+  border-radius: 10px;
+  color: #e2e8f0;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
+  user-select: none;
+  transition: opacity 0.2s;
+}
+
+#ev-bj-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Header / drag handle */
+#ev-bj-header {
+  all: initial;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px 6px;
+  background: rgba(30, 58, 138, 0.6);
+  border-radius: 10px 10px 0 0;
+  cursor: move;
+  border-bottom: 1px solid #2a3a52;
+}
+
+#ev-bj-title {
+  all: initial;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: #93c5fd;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.ev-bj-header-btns {
+  all: initial;
+  display: flex;
+  gap: 6px;
+}
+
+.ev-bj-icon-btn {
+  all: initial;
+  cursor: pointer;
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+.ev-bj-icon-btn:hover {
+  color: #e2e8f0;
+  background: rgba(255,255,255,0.1);
+}
+
+/* Body */
+#ev-bj-body {
+  all: initial;
+  display: block;
+  padding: 10px 12px;
+}
+
+/* Count section */
+.ev-bj-section {
+  all: initial;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.ev-bj-row {
+  all: initial;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.ev-bj-label {
+  all: initial;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 11px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.ev-bj-value {
+  all: initial;
+  font-family: 'Segoe UI Mono', 'Consolas', monospace;
+  font-size: 15px;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.ev-bj-value.positive { color: #4ade80; }
+.ev-bj-value.negative { color: #f87171; }
+.ev-bj-value.neutral  { color: #94a3b8; }
+.ev-bj-value.warning  { color: #fbbf24; }
+.ev-bj-value.strong   { color: #34d399; font-size: 17px; }
+
+/* True count badge */
+.ev-bj-tc-badge {
+  all: initial;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Segoe UI Mono', 'Consolas', monospace;
+  font-size: 22px;
+  font-weight: 900;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(30,58,138,0.4);
+  border: 2px solid #3b82f6;
+  color: #93c5fd;
+  text-align: center;
+}
+.ev-bj-tc-badge.tc-hot {
+  border-color: #4ade80;
+  color: #4ade80;
+  background: rgba(16,185,129,0.15);
+}
+.ev-bj-tc-badge.tc-cold {
+  border-color: #f87171;
+  color: #f87171;
+  background: rgba(239,68,68,0.15);
+}
+
+/* Bet recommendation */
+.ev-bj-bet-box {
+  all: initial;
+  display: block;
+  background: rgba(30, 58, 138, 0.25);
+  border: 1px solid #2a3a52;
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+}
+
+.ev-bj-bet-amount {
+  all: initial;
+  display: block;
+  font-family: 'Segoe UI Mono', 'Consolas', monospace;
+  font-size: 20px;
+  font-weight: 900;
+  color: #fbbf24;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.ev-bj-bet-label {
+  all: initial;
+  display: block;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 10px;
+  color: #64748b;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* Strategy recommendation */
+.ev-bj-strategy-box {
+  all: initial;
+  display: block;
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  text-align: center;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.ev-bj-strategy-box.deviation {
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.4);
+}
+
+.ev-bj-strategy-action {
+  all: initial;
+  display: block;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: #34d399;
+  letter-spacing: 0.5px;
+}
+
+.ev-bj-strategy-box.deviation .ev-bj-strategy-action {
+  color: #fbbf24;
+}
+
+.ev-bj-strategy-note {
+  all: initial;
+  display: block;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 10px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* Card input area */
+.ev-bj-card-input {
+  all: initial;
+  display: block;
+  margin-top: 8px;
+  border-top: 1px solid #1e293b;
+  padding-top: 8px;
+}
+
+.ev-bj-input-row {
+  all: initial;
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.ev-bj-card-btn {
+  all: initial;
+  cursor: pointer;
+  font-family: 'Segoe UI Mono', 'Consolas', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 7px;
+  background: rgba(51, 65, 85, 0.8);
+  border: 1px solid #334155;
+  border-radius: 4px;
+  color: #cbd5e1;
+  transition: background 0.15s, border-color 0.15s;
+  line-height: 1.4;
+}
+.ev-bj-card-btn:hover {
+  background: rgba(71, 85, 105, 0.9);
+  border-color: #475569;
+  color: #e2e8f0;
+}
+.ev-bj-card-btn.low  { color: #4ade80; border-color: #166534; }
+.ev-bj-card-btn.mid  { color: #94a3b8; }
+.ev-bj-card-btn.high { color: #f87171; border-color: #7f1d1d; }
+
+/* Mode buttons */
+.ev-bj-mode-row {
+  all: initial;
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.ev-bj-mode-btn {
+  all: initial;
+  cursor: pointer;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid #334155;
+  background: rgba(30,41,59,0.8);
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  transition: all 0.15s;
+}
+.ev-bj-mode-btn.active {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: #3b82f6;
+  color: #93c5fd;
+}
+.ev-bj-mode-btn:hover:not(.active) {
+  background: rgba(51, 65, 85, 0.6);
+  color: #cbd5e1;
+}
+
+/* Active cards display */
+.ev-bj-hand-display {
+  all: initial;
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  min-height: 28px;
+  padding: 4px 0;
+  align-items: center;
+}
+
+.ev-bj-card-chip {
+  all: initial;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Segoe UI Mono', 'Consolas', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  width: 24px;
+  height: 28px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 3px;
+  color: #1e293b;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.ev-bj-card-chip.red { color: #dc2626; }
+
+/* Divider */
+.ev-bj-divider {
+  all: initial;
+  display: block;
+  height: 1px;
+  background: #1e293b;
+  margin: 6px 0;
+}
+
+/* Shoe progress bar */
+.ev-bj-progress-wrap {
+  all: initial;
+  display: block;
+  background: #1e293b;
+  border-radius: 3px;
+  height: 4px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.ev-bj-progress-bar {
+  all: initial;
+  display: block;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* Action buttons row */
+.ev-bj-action-row {
+  all: initial;
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.ev-bj-action-btn {
+  all: initial;
+  cursor: pointer;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  flex: 1;
+  padding: 4px 0;
+  text-align: center;
+  border-radius: 4px;
+  border: 1px solid #334155;
+  background: rgba(30,41,59,0.8);
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  transition: all 0.15s;
+}
+.ev-bj-action-btn:hover {
+  background: rgba(51, 65, 85, 0.8);
+  color: #cbd5e1;
+}
+.ev-bj-action-btn.danger:hover {
+  background: rgba(127, 29, 29, 0.6);
+  border-color: #991b1b;
+  color: #fca5a5;
+}
+.ev-bj-action-btn.primary {
+  background: rgba(29, 78, 216, 0.25);
+  border-color: #1d4ed8;
+  color: #93c5fd;
+}
+.ev-bj-action-btn.primary:hover {
+  background: rgba(29, 78, 216, 0.4);
+}
+
+/* Collapsed state */
+#ev-bj-overlay.collapsed #ev-bj-body {
+  display: none;
+}
+#ev-bj-overlay.collapsed {
+  width: auto;
+}
+
+/* Keyboard shortcut hint */
+.ev-bj-hotkey-hint {
+  all: initial;
+  display: block;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 9px;
+  color: #334155;
+  text-align: center;
+  margin-top: 4px;
+}
+
+kbd {
+  all: initial;
+  font-family: 'Segoe UI Mono', monospace;
+  font-size: 9px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 2px;
+  padding: 0 3px;
+  color: #64748b;
+}

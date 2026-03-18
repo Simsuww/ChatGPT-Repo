@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EV Blackjack Counter</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 320px;
+      background: #0a0e14;
+      color: #e2e8f0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 13px;
+    }
+
+    header {
+      background: rgba(30, 58, 138, 0.6);
+      padding: 10px 14px;
+      border-bottom: 1px solid #1e3a5f;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    header h1 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #93c5fd;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      flex: 1;
+    }
+
+    .badge {
+      font-size: 9px;
+      background: rgba(52,211,153,0.2);
+      color: #34d399;
+      border: 1px solid rgba(52,211,153,0.3);
+      border-radius: 10px;
+      padding: 2px 7px;
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 8px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .tab.active { color: #93c5fd; border-bottom-color: #3b82f6; }
+    .tab:hover:not(.active) { color: #94a3b8; background: rgba(255,255,255,0.03); }
+
+    .tab-content { display: none; padding: 14px; }
+    .tab-content.active { display: block; }
+
+    /* Form elements */
+    .form-group { margin-bottom: 12px; }
+    label {
+      display: block;
+      font-size: 11px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 4px;
+    }
+
+    input[type="number"], select {
+      width: 100%;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 5px;
+      color: #e2e8f0;
+      font-size: 13px;
+      padding: 6px 9px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input[type="number"]:focus, select:focus { border-color: #3b82f6; }
+
+    .input-row { display: flex; gap: 8px; }
+    .input-row .form-group { flex: 1; }
+
+    /* Toggle switch */
+    .toggle-group {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+    }
+    .toggle-label { font-size: 12px; color: #cbd5e1; }
+    .toggle-hint { font-size: 10px; color: #475569; margin-top: 1px; }
+
+    .switch {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      inset: 0;
+      background: #334155;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .slider::before {
+      content: '';
+      position: absolute;
+      width: 14px; height: 14px;
+      left: 3px; top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+    input:checked + .slider { background: #3b82f6; }
+    input:checked + .slider::before { transform: translateX(16px); }
+
+    /* Stats panel */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .stat-card {
+      background: #1e293b;
+      border: 1px solid #2a3a52;
+      border-radius: 6px;
+      padding: 8px 10px;
+    }
+
+    .stat-card .stat-label {
+      font-size: 10px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .stat-card .stat-value {
+      font-size: 16px;
+      font-weight: 700;
+      font-family: monospace;
+      color: #e2e8f0;
+      margin-top: 2px;
+    }
+
+    .stat-card .stat-value.positive { color: #4ade80; }
+    .stat-card .stat-value.negative { color: #f87171; }
+    .stat-card .stat-value.neutral  { color: #94a3b8; }
+    .stat-card .stat-value.warning  { color: #fbbf24; }
+
+    /* TC distribution chart */
+    .tc-chart {
+      background: #1e293b;
+      border: 1px solid #2a3a52;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 12px;
+    }
+
+    .tc-chart-title {
+      font-size: 10px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 8px;
+    }
+
+    .tc-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .tc-bar-label {
+      font-size: 10px;
+      font-family: monospace;
+      color: #94a3b8;
+      width: 28px;
+      text-align: right;
+    }
+
+    .tc-bar-wrap {
+      flex: 1;
+      background: #0f172a;
+      border-radius: 2px;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    .tc-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.3s;
+    }
+
+    .tc-bar-count {
+      font-size: 10px;
+      color: #475569;
+      width: 24px;
+      text-align: right;
+    }
+
+    /* Deviation reference */
+    .dev-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+
+    .dev-table th {
+      text-align: left;
+      padding: 4px 6px;
+      font-size: 10px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .dev-table td {
+      padding: 4px 6px;
+      border-bottom: 1px solid #0f172a;
+      color: #cbd5e1;
+    }
+
+    .dev-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .index-badge {
+      display: inline-block;
+      font-family: monospace;
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: rgba(59,130,246,0.15);
+      color: #93c5fd;
+      border: 1px solid rgba(59,130,246,0.3);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-block;
+      padding: 7px 14px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .btn-primary {
+      background: #1d4ed8;
+      color: white;
+      width: 100%;
+    }
+    .btn-primary:hover { background: #2563eb; }
+
+    .btn-secondary {
+      background: #1e293b;
+      color: #94a3b8;
+      border: 1px solid #334155;
+    }
+    .btn-secondary:hover { background: #2a3a52; color: #e2e8f0; }
+
+    .btn-danger {
+      background: rgba(127,29,29,0.4);
+      color: #fca5a5;
+      border: 1px solid #7f1d1d;
+    }
+    .btn-danger:hover { background: rgba(153,27,27,0.6); }
+
+    .btn-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .btn-row .btn { flex: 1; }
+
+    /* Alert/info box */
+    .info-box {
+      background: rgba(59,130,246,0.1);
+      border: 1px solid rgba(59,130,246,0.2);
+      border-radius: 5px;
+      padding: 8px 10px;
+      font-size: 11px;
+      color: #93c5fd;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    .info-box.warning {
+      background: rgba(251,191,36,0.1);
+      border-color: rgba(251,191,36,0.2);
+      color: #fbbf24;
+    }
+
+    /* Saved indicator */
+    #save-indicator {
+      font-size: 11px;
+      color: #4ade80;
+      text-align: center;
+      padding: 4px;
+      display: none;
+    }
+
+    .divider {
+      height: 1px;
+      background: #1e293b;
+      margin: 10px 0;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>EV Blackjack Counter</h1>
+  <span class="badge">Hi-Lo</span>
+</header>
+
+<div class="tabs">
+  <div class="tab active" data-tab="counter">Counter</div>
+  <div class="tab" data-tab="settings">Settings</div>
+  <div class="tab" data-tab="deviations">Deviations</div>
+</div>
+
+<!-- ── Counter Tab ─────────────────────────────────────────────────────── -->
+<div class="tab-content active" id="tab-counter">
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Running Count</div>
+      <div class="stat-value neutral" id="stat-rc">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">True Count</div>
+      <div class="stat-value neutral" id="stat-tc">+0.0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Decks Left</div>
+      <div class="stat-value neutral" id="stat-dr">6.0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Player Edge</div>
+      <div class="stat-value negative" id="stat-edge">-0.40%</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Rec. Bet</div>
+      <div class="stat-value warning" id="stat-bet">Min</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">EV / Hand</div>
+      <div class="stat-value neutral" id="stat-ev">€0.00</div>
+    </div>
+  </div>
+
+  <!-- TC distribution -->
+  <div class="tc-chart">
+    <div class="tc-chart-title">True Count History Distribution</div>
+    <div id="tc-distribution"></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" id="btn-toggle-overlay">Show/Hide Overlay</button>
+    <button class="btn btn-danger" id="btn-reset">Reset Shoe</button>
+  </div>
+</div>
+
+<!-- ── Settings Tab ────────────────────────────────────────────────────── -->
+<div class="tab-content" id="tab-settings">
+
+  <div class="info-box">
+    Configure table rules to match the Evolution Gaming or Pragmatic Play table you're playing.
+    Most live tables use 6–8 decks with S17 and DAS.
+  </div>
+
+  <div class="section-title">Table Rules</div>
+
+  <div class="input-row">
+    <div class="form-group">
+      <label>Decks</label>
+      <select id="set-numDecks">
+        <option value="6">6 Decks</option>
+        <option value="8">8 Decks</option>
+        <option value="4">4 Decks</option>
+        <option value="2">2 Decks</option>
+        <option value="1">Single Deck</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Rule Set</label>
+      <select id="set-ruleKey">
+        <option value="6_S17_DAS">6D S17 DAS</option>
+        <option value="8_S17_DAS">8D S17 DAS</option>
+        <option value="6_H17_DAS">6D H17 DAS</option>
+        <option value="8_H17_DAS">8D H17 DAS</option>
+        <option value="6_S17_NODAS">6D S17 No DAS</option>
+        <option value="8_S17_NODAS">8D S17 No DAS</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="toggle-group">
+    <div>
+      <div class="toggle-label">Double After Split (DAS)</div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="set-das" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="toggle-group">
+    <div>
+      <div class="toggle-label">Late Surrender</div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="set-surrender" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="toggle-group">
+    <div>
+      <div class="toggle-label">Dealer Hits Soft 17 (H17)</div>
+      <div class="toggle-hint">Most Evolution tables: S17</div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="set-h17">
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="divider"></div>
+  <div class="section-title">Bankroll & Betting</div>
+
+  <div class="input-row">
+    <div class="form-group">
+      <label>Bankroll (€)</label>
+      <input type="number" id="set-bankroll" value="1000" min="10">
+    </div>
+    <div class="form-group">
+      <label>Kelly Fraction</label>
+      <select id="set-kellyFraction">
+        <option value="0.25">¼ Kelly (Conservative)</option>
+        <option value="0.5">½ Kelly (Moderate)</option>
+        <option value="1">Full Kelly (Aggressive)</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="input-row">
+    <div class="form-group">
+      <label>Min Bet (€)</label>
+      <input type="number" id="set-minBet" value="5" min="1">
+    </div>
+    <div class="form-group">
+      <label>Max Bet (€)</label>
+      <input type="number" id="set-maxBet" value="500" min="1">
+    </div>
+  </div>
+
+  <div class="info-box warning">
+    <strong>Evolution Gaming countable tables:</strong> Classic Blackjack, Standard Blackjack, VIP tables.
+    Avoid Infinite Blackjack (CSM — not countable).
+  </div>
+
+  <button class="btn btn-primary" id="btn-save-settings">Save Settings</button>
+  <div id="save-indicator">✓ Settings saved</div>
+</div>
+
+<!-- ── Deviations Tab ──────────────────────────────────────────────────── -->
+<div class="tab-content" id="tab-deviations">
+
+  <div class="info-box">
+    Play deviations when the true count crosses the index.
+    Illustrious 18 account for ~80% of deviation EV.
+  </div>
+
+  <div class="section-title">Illustrious 18 + Fab 4 Surrenders</div>
+
+  <table class="dev-table">
+    <thead>
+      <tr>
+        <th>Hand</th>
+        <th>vs Dealer</th>
+        <th>Action</th>
+        <th>Index</th>
+      </tr>
+    </thead>
+    <tbody id="dev-table-body">
+      <!-- Filled by JS -->
+    </tbody>
+  </table>
+
+  <div class="divider"></div>
+
+  <div class="info-box">
+    <strong>Insurance rule:</strong> Take insurance only when TC ≥ +3.
+    At TC +3 the deck is rich enough in tens to make insurance +EV.
+  </div>
+</div>
+
+<script src="../lib/counter.js"></script>
+<script src="../lib/ev.js"></script>
+<script src="../lib/strategy.js"></script>
+<script src="popup.js"></script>
+</body>
+</html>
