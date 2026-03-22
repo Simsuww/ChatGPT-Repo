@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Infinite Blackjack</title>
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/cards.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════ SPLASH ══ -->
+<div id="splash">
+  <h1>♠ Infinite Blackjack</h1>
+  <p>
+    All players share the same two starting cards.<br>
+    Each player then makes their own independent decisions.<br>
+    Unlimited players. One seat. Infinite possibilities.
+  </p>
+  <button id="splash-start-btn" class="btn-primary" style="font-size:16px;padding:14px 40px;">
+    Start Game
+  </button>
+  <p style="font-size:12px;color:rgba(240,230,211,0.4);">
+    Press <kbd style="background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:3px;">?</kbd> during play to toggle strategy hints
+  </p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ APP ═══ -->
+<div id="app">
+
+  <!-- ── HUD ── -->
+  <header id="hud">
+    <span class="hud-title">♠ INFINITE BLACKJACK</span>
+
+    <span id="phase-banner"></span>
+
+    <div class="hud-right">
+      <div id="shoe-indicator" title="Shoe depth">
+        <span style="font-size:11px;">Shoe</span>
+        <div id="shoe-bar"><div id="shoe-fill" style="width:100%"></div></div>
+      </div>
+      <span id="round-label" style="font-size:12px;"></span>
+      <button id="hints-btn" class="btn-secondary" style="font-size:11px;padding:4px 10px;">Hints: OFF</button>
+      <button id="stats-btn" class="btn-secondary" style="font-size:11px;padding:4px 10px;">Stats</button>
+    </div>
+  </header>
+
+  <!-- ── Table ── -->
+  <main id="table-area">
+
+    <!-- Dealer -->
+    <section id="dealer-section">
+      <div id="dealer-label">Dealer</div>
+      <div id="dealer-cards"></div>
+      <div id="dealer-value"></div>
+    </section>
+
+    <!-- Insurance offer banner -->
+    <div id="insurance-banner">
+      <span style="color:var(--gold);font-weight:700;">Dealer shows Ace — Insurance offered</span>
+      <span style="font-size:12px;color:var(--text-muted);">Each player can choose independently below</span>
+    </div>
+
+    <!-- Shared Seat Hand -->
+    <section id="seat-section">
+      <div id="seat-label">Shared Seat Hand</div>
+      <div id="seat-cards"></div>
+      <div id="seat-value"></div>
+    </section>
+
+    <!-- Players area -->
+    <section id="players-area">
+      <!-- Player panels injected here by PlayerRenderer -->
+      <!-- Add-player button injected by UIController -->
+    </section>
+
+    <!-- Table action buttons -->
+    <div id="table-controls">
+      <button id="deal-btn" class="btn-primary" disabled>Deal</button>
+      <button id="next-round-btn" class="btn-primary" style="display:none;">Next Round</button>
+    </div>
+
+  </main>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ ADD PLAYER ══ -->
+<div id="add-player-modal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <h3>Add Player</h3>
+    <input id="new-player-name" type="text" placeholder="Player name" maxlength="20" autocomplete="off">
+    <div class="modal-actions">
+      <button id="add-player-cancel" class="btn-secondary">Cancel</button>
+      <button id="add-player-confirm" class="btn-primary">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ STATS ══ -->
+<div id="stats-panel">
+  <h3>Session Statistics</h3>
+  <p id="stats-player-select" style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">
+    Select a player to view stats
+  </p>
+  <div id="stats-content"></div>
+  <button id="stats-close" class="btn-secondary" style="margin-top:12px;width:100%;">Close</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ ERROR TOAST ── -->
+<div id="error-toast" style="
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(192,57,43,0.95);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 300;
+  pointer-events: none;
+  max-width: 90vw;
+  text-align: center;
+"></div>
+
+<!-- ═══════════════════════════════════════════════════════════ SCRIPT ═ -->
+<script type="module">
+  import { UIController } from './src/ui/UIController.js';
+  const ui = new UIController();
+  ui.init();
+</script>
+
+</body>
+</html>
