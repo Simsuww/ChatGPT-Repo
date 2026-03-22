@@ -2,10 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0d1f14">
   <title>Infinite Blackjack</title>
   <link rel="stylesheet" href="styles/main.css">
   <link rel="stylesheet" href="styles/cards.css">
+  <link rel="stylesheet" href="styles/mobile.css">
 </head>
 <body>
 
@@ -20,9 +25,15 @@
   <button id="splash-start-btn" class="btn-primary" style="font-size:16px;padding:14px 40px;">
     Start Game
   </button>
-  <p style="font-size:12px;color:rgba(240,230,211,0.4);">
+  <p style="font-size:12px;color:rgba(240,230,211,0.4);" id="splash-hint-keyboard">
     Press <kbd style="background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:3px;">?</kbd> during play to toggle strategy hints
   </p>
+  <script>
+    // Hide keyboard hint on touch-primary devices
+    if (window.matchMedia('(pointer: coarse)').matches) {
+      document.getElementById('splash-hint-keyboard').style.display = 'none';
+    }
+  </script>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════ APP ═══ -->
@@ -67,6 +78,12 @@
       <div id="seat-cards"></div>
       <div id="seat-value"></div>
     </section>
+
+    <!-- Mobile player tab nav (hidden on desktop via CSS) -->
+    <nav id="player-nav">
+      <div id="player-nav-tabs"></div>
+      <button id="player-nav-add" title="Add player">+</button>
+    </nav>
 
     <!-- Players area -->
     <section id="players-area">

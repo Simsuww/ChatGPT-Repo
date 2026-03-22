@@ -18,14 +18,27 @@ export class PlayerRenderer {
    * @param {function(): void} onAddPlayer - callback for Add Player button
    */
   constructor(container, onAction, onAddPlayer) {
-    this._container  = container;
-    this._onAction   = onAction;
+    this._container   = container;
+    this._onAction    = onAction;
     this._onAddPlayer = onAddPlayer;
-    this._panels     = new Map(); // playerId → HTMLElement
-    this._showHints  = false;
+    this._panels      = new Map(); // playerId → HTMLElement
+    this._showHints   = false;
+    this._mobileIdx   = 0; // which player panel is visible on mobile
+    this._playerIds   = []; // ordered list of player ids for mobile nav
+
+    this._navEl       = document.getElementById('player-nav');
+    this._navTabs     = document.getElementById('player-nav-tabs');
+    this._navAdd      = document.getElementById('player-nav-add');
+
+    if (this._navAdd) {
+      this._navAdd.addEventListener('click', () => this._onAddPlayer());
+    }
   }
 
   set showHints(v) { this._showHints = v; }
+
+  /** True when the viewport is in mobile single-panel mode. */
+  get _isMobile() { return window.matchMedia('(max-width: 640px)').matches; }
 
   /**
    * Full render pass for all players.
@@ -34,6 +47,19 @@ export class PlayerRenderer {
   render(snap) {
     const { players, phase, dealer } = snap;
     const playerIds = players.map(p => p.id);
+
+    // Auto-advance mobile panel to active player during DECISIONS
+    if (this._isMobile && phase === Phase.DECISIONS) {
+      const activeIdx = players.findIndex(p => p.isActive && !p.isComplete);
+      if (activeIdx !== -1) this._mobileIdx = activeIdx;
+    }
+
+    // Clamp mobile index after a player is removed
+    if (this._mobileIdx >= playerIds.length) {
+      this._mobileIdx = Math.max(0, playerIds.length - 1);
+    }
+
+    this._playerIds = playerIds;
 
     // Remove panels for players who left
     for (const [id, el] of this._panels) {
@@ -56,11 +82,51 @@ export class PlayerRenderer {
       }
     }
 
-    // Show/hide add player button
+    // Apply mobile-visible class
+    if (this._isMobile) {
+      for (const [id, el] of this._panels) {
+        const idx = this._playerIds.indexOf(id);
+        el.classList.toggle('mobile-visible', idx === this._mobileIdx);
+      }
+    } else {
+      for (const [, el] of this._panels) el.classList.remove('mobile-visible');
+    }
+
+    // Render mobile nav tab strip
+    this._renderMobileNav(players, phase);
+
+    // Show/hide desktop add player button
     const addBtn = document.getElementById('add-player-btn');
     if (addBtn) {
       addBtn.style.display = (phase === Phase.BETTING || phase === Phase.IDLE) && players.length < Rules.MAX_PLAYERS
         ? 'flex' : 'none';
+    }
+  }
+
+  _renderMobileNav(players, phase) {
+    if (!this._navEl || !this._navTabs) return;
+    const canAdd = (phase === Phase.BETTING || phase === Phase.IDLE) && players.length < Rules.MAX_PLAYERS;
+
+    this._navTabs.innerHTML = '';
+    players.forEach((player, idx) => {
+      const tab = document.createElement('button');
+      tab.className = `player-nav-tab${idx === this._mobileIdx ? ' active' : ''}`;
+      // Show unread indicator if it's this player's turn
+      const needsAction = phase === Phase.DECISIONS && player.isActive && !player.isComplete;
+      tab.innerHTML = `${this._esc(player.name)}${needsAction ? ' <span style="color:var(--gold)">●</span>' : ''}`;
+      tab.addEventListener('click', () => {
+        this._mobileIdx = idx;
+        // Force re-render via the same snap — re-call render triggers the toggle
+        for (const [id, el] of this._panels) {
+          el.classList.toggle('mobile-visible', this._playerIds.indexOf(id) === this._mobileIdx);
+        }
+        this._renderMobileNav(players, phase);
+      });
+      this._navTabs.appendChild(tab);
+    });
+
+    if (this._navAdd) {
+      this._navAdd.style.display = canAdd ? '' : 'none';
     }
   }
 
