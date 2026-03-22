@@ -169,7 +169,7 @@ export class PlayerRenderer {
     el.appendChild(header);
 
     // ── Bet area / chip selection ──
-    if ((phase === Phase.BETTING) && player.isActive !== false) {
+    if (phase === Phase.BETTING && !player.isSittingOut) {
       el.appendChild(this._buildBetArea(player));
     } else if (player.isActive && player.hands.length > 0) {
       const betRow = document.createElement('div');
