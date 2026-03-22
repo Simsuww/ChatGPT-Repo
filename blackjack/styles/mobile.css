@@ -1,0 +1,214 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Infinite Blackjack — mobile responsive styles
+   Appended to main.css via separate file, no overwrites needed.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Mobile player nav bar (tab strip) ──────────────────────────────────── */
+
+#player-nav {
+  display: none; /* shown via JS on mobile */
+  width: 100%;
+  max-width: 1100px;
+  align-items: center;
+  gap: 0;
+  background: rgba(0,0,0,0.35);
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--panel-border);
+}
+
+#player-nav-tabs {
+  display: flex;
+  flex: 1;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+#player-nav-tabs::-webkit-scrollbar { display: none; }
+
+.player-nav-tab {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+.player-nav-tab.active {
+  color: var(--gold);
+  border-bottom-color: var(--gold);
+}
+
+#player-nav-add {
+  padding: 10px 14px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-left: 1px solid var(--panel-border);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+#player-nav-add:hover { color: var(--text-primary); }
+
+/* ─── Mobile: hide desktop add-player button ──────────────────────────────── */
+
+@media (max-width: 640px) {
+  /* ── Core layout ── */
+  #hud {
+    padding: 6px 10px;
+    gap: 6px;
+  }
+  .hud-title {
+    font-size: 13px !important;
+  }
+  #hud .hud-right {
+    gap: 8px;
+  }
+  #shoe-bar { width: 50px; }
+
+  #table-area {
+    padding: 10px 8px;
+    gap: 8px;
+  }
+
+  /* ── Dealer ── */
+  #dealer-section {
+    gap: 5px;
+  }
+  #dealer-value { font-size: 15px; }
+
+  /* ── Seat ── */
+  #seat-section {
+    padding: 8px 12px;
+  }
+  #seat-value { font-size: 14px; }
+
+  /* Cards slightly smaller on mobile */
+  :root {
+    --card-w: 58px;
+    --card-h: 82px;
+  }
+
+  /* ── Players: single-panel carousel mode ── */
+  #players-area {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .player-panel {
+    min-width: 0;
+    max-width: 100%;
+    display: none; /* hidden by default; JS shows active one */
+  }
+  .player-panel.mobile-visible {
+    display: flex;
+  }
+
+  /* Hide desktop add-player floating button */
+  #add-player-btn { display: none !important; }
+
+  /* Show the nav tab bar */
+  #player-nav { display: flex; }
+
+  /* ── Bigger tap targets ── */
+  .btn-action {
+    padding: 12px 6px;
+    font-size: 13px;
+    min-width: 48px;
+    min-height: 44px;
+  }
+
+  .chip {
+    width: 46px;
+    height: 46px;
+    font-size: 11px;
+    border-width: 3px;
+  }
+
+  .chip-row {
+    gap: 7px;
+  }
+
+  .btn-primary {
+    padding: 13px 32px;
+    font-size: 15px;
+  }
+
+  .btn-secondary {
+    padding: 11px 18px;
+    font-size: 12px;
+  }
+
+  /* ── Action button row: 2-column grid on narrow screens ── */
+  .action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  /* Hit and Stand each take half; others fill as they come */
+
+  /* ── Insurance banner ── */
+  #insurance-banner {
+    font-size: 13px;
+    padding: 10px 14px;
+    text-align: center;
+  }
+
+  /* ── Table controls ── */
+  #table-controls {
+    padding: 6px;
+    gap: 8px;
+  }
+
+  /* ── Stats panel full-screen on mobile ── */
+  #stats-panel {
+    width: 92vw;
+    padding: 16px 18px;
+  }
+
+  /* ── Splash ── */
+  #splash h1 { font-size: 32px; }
+  #splash p  { font-size: 13px; padding: 0 12px; }
+
+  /* ── Phase banner ── */
+  #phase-banner {
+    font-size: 11px;
+    padding: 3px 12px;
+  }
+}
+
+/* ─── Medium screens (tablets) ──────────────────────────────────────────── */
+
+@media (min-width: 641px) and (max-width: 900px) {
+  .player-panel {
+    min-width: 160px;
+  }
+  :root {
+    --card-w: 64px;
+    --card-h: 90px;
+  }
+  .chip { width: 40px; height: 40px; }
+  .btn-action { padding: 9px 5px; min-height: 40px; }
+}
+
+/* ─── Landscape phone: keep table compact ───────────────────────────────── */
+
+@media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
+  #dealer-section, #seat-section { padding: 4px; gap: 4px; }
+  :root { --card-w: 48px; --card-h: 68px; }
+  #table-area { gap: 6px; padding: 6px; }
+  #hud { padding: 4px 10px; }
+}
